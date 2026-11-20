@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hématologie">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Hématologie — Révision interactive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #F6F3EC;
+  --ink: #1C2B3A;
+  --ink-soft: #4A5A6A;
+  --maroon: #7C2D3B;
+  --maroon-deep: #5E1F2A;
+  --teal: #35595A;
+  --teal-soft: #EDF2F1;
+  --card-bg: #FFFFFF;
+  --line: #DDD5C6;
+  --gold: #B8934A;
+  --ok: #3B7A57;
+  --bad: #B84A3E;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #171B21;
+    --ink: #ECE7DC;
+    --ink-soft: #A9B2BC;
+    --card-bg: #1F252D;
+    --line: #333B45;
+    --teal-soft: #202B2A;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #171B21;
+  --ink: #ECE7DC;
+  --ink-soft: #A9B2BC;
+  --card-bg: #1F252D;
+  --line: #333B45;
+  --teal-soft: #202B2A;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); -webkit-text-size-adjust: 100%; }
+html, body { height: 100%; overscroll-behavior-y: contain; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+  touch-action: manipulation;
+}
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+}
+.masthead {
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 18px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.masthead h1 {
+  font-family: 'Spectral', Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(26px, 5vw, 34px);
+  margin: 0;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+.masthead .tag {
+  font-size: 14px;
+  color: var(--ink-soft);
+  font-style: italic;
+  font-family: 'Spectral', Georgia, serif;
+}
+.modes {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.mode-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding: 12px 8px 14px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: color .15s ease, border-color .15s ease;
+}
+.mode-btn.active {
+  color: var(--maroon);
+  border-bottom-color: var(--maroon);
+}
+.mode-btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ---- Category chips ---- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+.chip {
+  font-size: 13px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card-bg);
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-family: 'IBM Plex Sans', sans-serif;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.chip.on {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+.chip:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+/* ---- Flashcards ---- */
+.fc-stage {
+  perspective: 1400px;
+  margin-bottom: 18px;
+}
+.fc-card {
+  position: relative;
+  min-height: 260px;
+  border-radius: 14px;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform .5s cubic-bezier(.2,.8,.3,1);
+}
+.fc-card.flipped { transform: rotateY(180deg); }
+.fc-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--card-bg);
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 2px 0 var(--line);
+}
+.fc-face .eyebrow {
+  font-size: 12px;
+  color: var(--teal);
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.fc-face p {
+  font-family: 'Spectral', Georgia, serif;
+  font-size: 20px;
+  line-height: 1.5;
+  margin: 0;
+  color: var(--ink);
+}
+.fc-back { transform: rotateY(180deg); background: var(--teal-soft); }
+.fc-back p { color: var(--ink); font-weight: 500; }
+.fc-hint {
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 20px;
+}
+.fc-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.fc-count {
+  font-size: 14px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.fc-buttons { display: flex; gap: 8px; }
+.btn {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  cursor: pointer;
+  transition: transform .1s ease, opacity .15s;
+}
+.btn:active { transform: scale(0.97); }
+.btn.secondary {
+  background: transparent;
+  color: var(--ink);
+}
+.btn.shuffle { background: transparent; color: var(--maroon); border-color: var(--maroon); }
+.btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.btn:disabled { opacity: .35; cursor: default; }
+
+.fc-toprow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.progress-track {
+  height: 5px;
+  background: var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--maroon);
+  transition: width .3s ease;
+}
+
+/* ---- Quiz ---- */
+.quiz-intro {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 28px;
+  text-align: center;
+}
+.quiz-intro h2 {
+  font-family: 'Spectral', serif;
+  font-size: 22px;
+  margin: 0 0 10px;
+}
+.quiz-intro p { color: var(--ink-soft); margin: 0 0 22px; font-size: 15px; line-height: 1.6;}
+.q-card {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 28px;
+}
+.q-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 16px;
+}
+.q-meta .cat-label { color: var(--teal); font-weight: 600; }
+.q-text {
+  font-family: 'Spectral', Georgia, serif;
+  font-size: 21px;
+  line-height: 1.45;
+  margin: 0 0 20px;
+}
+.q-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+.q-opt {
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 15px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+@media (hover: hover) {
+  .q-opt:hover:not(:disabled) { border-color: var(--teal); }
+}
+.q-opt:active:not(:disabled) { border-color: var(--teal); }
+.q-opt:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.q-opt.correct { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, var(--card-bg)); }
+.q-opt.wrong { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, var(--card-bg)); }
+.q-opt:disabled { cursor: default; }
+.q-explain {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--teal-soft);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink);
+  display: none;
+}
+.q-explain.show { display: block; }
+.q-explain strong { color: var(--teal); }
+.q-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 22px;
+}
+.q-progress-text { font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+.result-card {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 32px 28px;
+  text-align: center;
+}
+.result-score {
+  font-family: 'Spectral', serif;
+  font-size: 52px;
+  font-weight: 700;
+  color: var(--maroon);
+  margin: 6px 0 4px;
+}
+.result-sub { color: var(--ink-soft); font-size: 15px; margin-bottom: 24px; }
+.result-breakdown {
+  text-align: left;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  margin-bottom: 24px;
+}
+.rb-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.rb-row:last-child { border-bottom: none; }
+.rb-cat { color: var(--ink-soft); }
+.rb-score { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.action-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+footer.note {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 13px;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 480px) {
+  .fc-face { padding: 24px 20px; }
+  .fc-face p { font-size: 18px; }
+  .q-text { font-size: 19px; }
+  .masthead { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <h1>Hématologie — 200 points essentiels</h1>
+    <span class="tag">Fiches &amp; quiz de révision</span>
+  </div>
+
+  <div class="modes">
+    <button class="mode-btn active" data-mode="fiches">Fiches de révision</button>
+    <button class="mode-btn" data-mode="quiz">Quiz QCM</button>
+  </div>
+
+  <!-- ============ FICHES PANEL ============ -->
+  <div class="panel active" id="panel-fiches">
+    <div class="chips" id="chips-fiches"></div>
+
+    <div class="fc-toprow">
+      <span class="fc-count" id="fc-count">1 / 200</span>
+      <button class="btn shuffle" id="fc-shuffle-btn">Mélanger</button>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="fc-progress"></div></div>
+
+    <div class="fc-stage">
+      <div class="fc-card" id="fc-card">
+        <div class="fc-face fc-front">
+          <div class="eyebrow" id="fc-front-cat">Catégorie</div>
+          <p id="fc-front-text">Question</p>
+        </div>
+        <div class="fc-face fc-back">
+          <div class="eyebrow">Réponse</div>
+          <p id="fc-back-text">Réponse</p>
+        </div>
+      </div>
+    </div>
+    <div class="fc-hint">Touchez la carte pour retourner</div>
+
+    <div class="fc-nav">
+      <button class="btn secondary" id="fc-prev">← Précédent</button>
+      <div class="fc-buttons">
+        <button class="btn secondary" id="fc-flip">Retourner</button>
+        <button class="btn" id="fc-next">Suivant →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ QUIZ PANEL ============ -->
+  <div class="panel" id="panel-quiz">
+
+    <div id="quiz-intro" class="quiz-intro">
+      <h2>Testez vos connaissances</h2>
+      <p>58 questions à choix multiples couvrant l'ensemble des deux fiches de synthèse. Choisissez une catégorie ou lancez le quiz complet.</p>
+      <div class="chips" id="chips-quiz" style="justify-content:center; margin-bottom: 20px;"></div>
+      <button class="btn" id="quiz-start-btn">Commencer le quiz</button>
+    </div>
+
+    <div id="quiz-play" style="display:none;">
+      <div class="progress-track"><div class="progress-fill" id="quiz-progress"></div></div>
+      <div class="q-card">
+        <div class="q-meta">
+          <span class="cat-label" id="q-cat"></span>
+          <span id="q-index"></span>
+        </div>
+        <p class="q-text" id="q-text"></p>
+        <div class="q-options" id="q-options"></div>
+        <div class="q-explain" id="q-explain"></div>
+      </div>
+      <div class="q-footer">
+        <span class="q-progress-text" id="q-score-live"></span>
+        <button class="btn" id="q-next-btn" disabled>Question suivante →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result" style="display:none;" class="result-card">
+      <div class="result-sub">Votre score</div>
+      <div class="result-score" id="result-score-text">0 / 0</div>
+      <div class="result-sub" id="result-msg"></div>
+      <div class="result-breakdown" id="result-breakdown"></div>
+      <div class="action-row">
+        <button class="btn" id="quiz-retry-btn">Recommencer</button>
+        <button class="btn secondary" id="quiz-home-btn">Choisir une catégorie</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="note">Fiche de révision personnelle — basée sur les deux documents de synthèse en hématologie.</footer>
+</div>
+
+<script>
+// ===================== FLASHCARDS (200 points) =====================
+const FLASHCARDS = [
+// --- PHYSIOLOGIE & HÉMATOPOÏÈSE ---
+{cat:"physio", q:"Quel pourcentage du poids corporel représente le sang, et quelles sont ses 3 fonctions ?", a:"Environ 7 % du poids corporel ; transport, protection et régulation thermique."},
+{cat:"physio", q:"Quelle est la composition du sang en plasma et éléments figurés ?", a:"Plasma 55 %, globules rouges 40 %, globules blancs et plaquettes < 1 %."},
+{cat:"physio", q:"Qu'est-ce que l'hématopoïèse ?", a:"Le processus de formation des cellules sanguines à partir des cellules souches de la moelle osseuse."},
+{cat:"physio", q:"Combien de cellules sanguines la moelle produit-elle chaque jour ?", a:"~200 milliards de globules rouges, 100 milliards de leucocytes, 100 milliards de plaquettes/jour."},
+{cat:"physio", q:"Quelles sont les deux grandes lignées hématopoïétiques ?", a:"Myéloïde (GR, plaquettes, monocytes, neutrophiles) et lymphoïde (lymphocytes)."},
+{cat:"physio", q:"Quel organe sécrète l'érythropoïétine et pourquoi ?", a:"Le rein, en réponse à l'hypoxie, pour stimuler la production de globules rouges."},
+{cat:"physio", q:"Comment est structurée l'hémoglobine adulte (HbA) ?", a:"4 chaînes polypeptidiques (2α + 2β) liées à un groupe hème contenant du fer."},
+{cat:"physio", q:"Quelle est la durée de vie des globules rouges, plaquettes et leucocytes ?", a:"GR ~120 jours, plaquettes 7-10 jours, leucocytes de quelques heures à plusieurs années."},
+{cat:"physio", q:"Citez des cytokines régulant l'hématopoïèse.", a:"G-CSF, GM-CSF, TPO, IL-3."},
+{cat:"physio", q:"Comment le fer est-il transporté et stocké dans le sang ?", a:"Transporté par la transferrine, stocké dans la ferritine hépatique et splénique."},
+
+// --- ANÉMIES ---
+{cat:"anemie", q:"Quelle est la taille normale d'un globule rouge et sa durée de vie ?", a:"7-8 µm de diamètre, durée de vie de 120 jours, destruction principalement splénique."},
+{cat:"anemie", q:"Quelles sont les valeurs normales d'hémoglobine chez l'homme et la femme ?", a:"13,5-17,5 g/dL chez l'homme ; 12-15,5 g/dL chez la femme."},
+{cat:"anemie", q:"Comment définit-on l'anémie ?", a:"Une diminution de l'hémoglobine ou du nombre de globules rouges en dessous des normes."},
+{cat:"anemie", q:"Comment classe-t-on l'anémie selon le VGM ?", a:"Microcytaire (< 80 fL), normocytaire (80-100 fL), macrocytaire (> 100 fL)."},
+{cat:"anemie", q:"Quel type d'anémie provoque une carence en fer ?", a:"Une anémie microcytaire hypochrome (anémie ferriprive)."},
+{cat:"anemie", q:"Quelles sont les conséquences d'une carence en vitamine B12 ?", a:"Anémie macrocytaire avec troubles neurologiques et glossite."},
+{cat:"anemie", q:"Qu'est-ce que l'anémie mégaloblastique ?", a:"Un défaut de synthèse de l'ADN (carence B12/folates) produisant des GR anormalement grands."},
+{cat:"anemie", q:"Quels marqueurs biologiques signent une anémie hémolytique ?", a:"Bilirubine indirecte élevée et LDH élevé, par destruction accélérée des GR."},
+{cat:"anemie", q:"Quelle est l'origine de la sphérocytose héréditaire ?", a:"Une anomalie génétique des protéines membranaires du globule rouge."},
+{cat:"anemie", q:"Qu'est-ce que la thalassémie ?", a:"Une hémoglobinopathie héréditaire due à une synthèse anormale des chaînes de globine."},
+{cat:"anemie", q:"Quelle est la transmission et la particularité de l'hémoglobine dans la drépanocytose ?", a:"Autosomique récessive ; hémoglobine S qui polymérise en conditions hypoxiques."},
+{cat:"anemie", q:"Que provoque l'anémie aplasique ?", a:"Une insuffisance médullaire globale avec pancytopénie et absence de splénomégalie."},
+{cat:"anemie", q:"Quel type d'anémie survient après une hémorragie aiguë ?", a:"Une anémie normocytaire normochrome avec tachycardie compensatrice."},
+{cat:"anemie", q:"Que caractérise l'anémie des maladies chroniques ?", a:"Anémie normocytaire légère avec ferritine normale ou élevée."},
+{cat:"anemie", q:"Quelles sont les valeurs normales d'hématocrite ?", a:"40-50 % chez l'homme, 36-44 % chez la femme."},
+
+// --- LEUCOCYTES & HÉMOPATHIES MALIGNES ---
+{cat:"leuco", q:"Quelle est la répartition normale de la formule leucocytaire ?", a:"Neutrophiles 55-70 %, lymphocytes 20-40 %, monocytes 2-8 %, éosinophiles 1-4 %, basophiles 0-1 %."},
+{cat:"leuco", q:"Quel est le rôle principal des neutrophiles ?", a:"La défense contre les infections bactériennes."},
+{cat:"leuco", q:"Comment définit-on la leucocytose et la leucopénie ?", a:"Leucocytose > 11 000/µL ; leucopénie < 4 000/µL (risque infectieux accru)."},
+{cat:"leuco", q:"Que caractérise une leucémie aiguë ?", a:"Prolifération incontrôlée de blastes immatures avec anémie, thrombopénie, hyperleucocytose."},
+{cat:"leuco", q:"Que touche la leucémie myéloïde aiguë (LMA) ?", a:"Accumulation de blastes myéloïdes dans la moelle et le sang périphérique."},
+{cat:"leuco", q:"Qui est principalement touché par la leucémie lymphoblastique aiguë (LLA) ?", a:"L'enfant, avec accumulation de lymphoblastes B ou T."},
+{cat:"leuco", q:"Quelle anomalie caractérise la leucémie myéloïde chronique (LMC) ?", a:"La translocation t(9;22) créant le gène de fusion BCR-ABL."},
+{cat:"leuco", q:"Comment se présente typiquement la leucémie lymphoïde chronique (LLC) ?", a:"Prolifération maligne de lymphocytes B matures, souvent découverte incidentellement."},
+{cat:"leuco", q:"Qu'est-ce que le syndrome myélodysplasique ?", a:"Un désordre de l'hématopoïèse avec dysplasie médullaire et pancytopénie."},
+{cat:"leuco", q:"Comment définit-on la polycythémie vera ?", a:"Augmentation primitive de la masse globulaire (Hb > 18 g/dL chez l'homme)."},
+{cat:"leuco", q:"Que caractérise la thrombocythémie essentielle ?", a:"Augmentation primitive des plaquettes avec risque de thrombose et d'hémorragie."},
+{cat:"leuco", q:"Quels sont les 3 signes de la myélofibrose primitive ?", a:"Fibrose médullaire, splénomégalie et anémie."},
+{cat:"leuco", q:"Quelle cellule caractérise le lymphome de Hodgkin ?", a:"La cellule de Reed-Sternberg."},
+{cat:"leuco", q:"Qu'englobent les lymphomes non hodgkiniens ?", a:"Un groupe hétérogène de cancers lymphoïdes B et T."},
+{cat:"leuco", q:"Que caractérise le myélome multiple ?", a:"Prolifération de plasmocytes médullaires avec production d'une immunoglobuline monoclonale."},
+{cat:"leuco", q:"Qu'est-ce que l'amylose AL ?", a:"Le dépôt de fibrilles d'immunoglobulines anormales dans les tissus."},
+{cat:"leuco", q:"Que produit la macroglobulinémie de Waldenström ?", a:"Une macro-immunoglobuline M (syndrome lymphoprolifératif)."},
+{cat:"leuco", q:"Quel est l'effet du VIH sur l'hématologie ?", a:"Immunodéficience progressive avec baisse des CD4 et infections opportunistes."},
+{cat:"leuco", q:"Qu'est-ce que le syndrome d'activation macrophagique ?", a:"Une activation et prolifération excessive des macrophages, complication grave d'infections ou d'hémopathies."},
+
+// --- PLAQUETTES, COAGULATION & HÉMOSTASE ---
+{cat:"coag", q:"D'où proviennent les plaquettes et quelle est leur durée de vie ?", a:"Fragments cytoplasmiques des mégacaryocytes ; durée de vie 7-10 jours."},
+{cat:"coag", q:"Quelle est la numération plaquettaire normale ?", a:"150 000 à 400 000/µL."},
+{cat:"coag", q:"Comment définit-on la thrombopénie et la thrombocytose ?", a:"Thrombopénie < 150 000/µL ; thrombocytose > 400 000/µL."},
+{cat:"coag", q:"Qu'est-ce que le purpura thrombopénique idiopathique (PTI) ?", a:"Une destruction auto-immune des plaquettes."},
+{cat:"coag", q:"Quelle triade caractérise le TTP (purpura thrombotique thrombocytopénique) ?", a:"Thrombopénie, anémie hémolytique microangiopathique, atteinte neurologique."},
+{cat:"coag", q:"Quelles sont les 3 phases de la cascade de coagulation ?", a:"Initiation, amplification, propagation."},
+{cat:"coag", q:"Quels facteurs initient la voie extrinsèque ?", a:"Le facteur tissulaire (TF) et le facteur VII."},
+{cat:"coag", q:"Quels facteurs composent la voie intrinsèque ?", a:"Facteurs XII, XI, IX et VIII."},
+{cat:"coag", q:"Quels éléments forment la voie commune de coagulation ?", a:"Facteurs X, V, II, fibrinogène et plaquettes."},
+{cat:"coag", q:"Que mesure le TP/INR ?", a:"La voie extrinsèque et la voie commune de la coagulation."},
+{cat:"coag", q:"Que mesure le TCA et pour quoi est-il utilisé en surveillance ?", a:"La voie intrinsèque et la voie commune ; surveillance de l'héparine."},
+{cat:"coag", q:"Que mesure le temps de thrombine (TT) ?", a:"La conversion du fibrinogène en fibrine."},
+{cat:"coag", q:"Quelle est l'origine de la maladie de Willebrand ?", a:"Un déficit ou dysfonctionnement du facteur Willebrand."},
+{cat:"coag", q:"Quel facteur est déficitaire dans l'hémophilie A et selon quel mode de transmission ?", a:"Facteur VIII ; transmission récessive liée à l'X."},
+{cat:"coag", q:"Quel facteur est déficitaire dans l'hémophilie B ?", a:"Facteur IX (maladie de Christmas), récessive liée à l'X."},
+{cat:"coag", q:"Qu'est-ce que la thrombophilie ?", a:"Une prédisposition génétique ou acquise aux thromboses veineuses et artérielles."},
+{cat:"coag", q:"Quelle est l'anomalie de coagulation familiale la plus fréquente ?", a:"La résistance à la protéine C activée due au facteur V Leiden."},
+{cat:"coag", q:"Quel est le risque en cas de déficit en protéine C, S ou antithrombine III ?", a:"Augmentation du risque de thrombose veineuse profonde et d'embolie pulmonaire."},
+{cat:"coag", q:"Comment agit l'héparine non fractionnée (HNF) ?", a:"En potentialisant l'action de l'antithrombine, empêchant la formation de thrombine."},
+{cat:"coag", q:"Quel avantage ont les HBPM par rapport à l'HNF ?", a:"Meilleure biodisponibilité et demi-vie plus longue."},
+{cat:"coag", q:"Comment agissent les anticoagulants oraux directs (dabigatran, apixaban...) ?", a:"Inhibition directe du facteur IIa (dabigatran) ou Xa (apixaban, rivaroxaban, edoxaban)."},
+{cat:"coag", q:"Comment agit la warfarine et quel est son délai d'action ?", a:"Inhibe les facteurs vitamine K-dépendants (II, VII, IX, X) ; délai de 36-72h."},
+{cat:"coag", q:"Comment agit l'aspirine sur l'hémostase ?", a:"Inhibition irréversible de la cyclooxygénase et de la synthèse de thromboxane."},
+{cat:"coag", q:"Comment agissent les anti-P2Y12 (clopidogrel...) ?", a:"Inhibition de l'agrégation plaquettaire ADP-dépendante."},
+{cat:"coag", q:"Quel est le risque principal d'une thrombose veineuse profonde (TVP) ?", a:"L'embolie pulmonaire."},
+{cat:"coag", q:"Quelle est l'origine de l'infarctus du myocarde en hématologie ?", a:"Formation d'un thrombus sur une plaque d'athérosclérose coronarienne."},
+{cat:"coag", q:"Quelle est l'origine de l'AVC ischémique ?", a:"Occlusion artérielle d'origine thromboembolique."},
+{cat:"coag", q:"Qu'est-ce que la CIVD ?", a:"Une activation généralisée de la coagulation avec consommation des facteurs."},
+
+// --- DIAGNOSTIC & LABORATOIRE (doc1) ---
+{cat:"diag", q:"Que permet d'évaluer l'hémogramme ?", a:"Les 3 lignées cellulaires : globules rouges, blancs et plaquettes."},
+{cat:"diag", q:"Que mesure le VGM et à quoi sert-il ?", a:"Le volume moyen d'un globule rouge ; guide le diagnostic étiopathogénique de l'anémie."},
+{cat:"diag", q:"Que mesurent la TCMH et la CCMH ?", a:"TCMH : quantité moyenne d'Hb par GR ; CCMH : saturation moyenne en Hb des GR."},
+{cat:"diag", q:"À quoi sert le frottis sanguin ?", a:"Examiner la morphologie cellulaire (blastes, anisocytose, poïkilocytose)."},
+{cat:"diag", q:"Que permet le myélogramme ?", a:"Évaluer la production hématopoïétique et diagnostiquer les hémopathies."},
+{cat:"diag", q:"Quel est le rôle de la cytochimie médullaire ?", a:"Différencier les lignées myéloïde et lymphoïde dans les hémopathies."},
+{cat:"diag", q:"Que renseigne la biopsie ostéomédullaire ?", a:"L'architecture médullaire, la cellularité et la présence d'infiltrats tumoraux."},
+{cat:"diag", q:"Que détectent le caryotype et la FISH ?", a:"Les anomalies chromosomales et les translocations récurrentes."},
+{cat:"diag", q:"Que permet la biologie moléculaire (PCR, séquençage) en hématologie ?", a:"Identifier les mutations (BCR-ABL, FLT3-ITD) pour diagnostic et pronostic."},
+
+// --- TRAITEMENTS & TRANSFUSION (doc1) ---
+{cat:"transfu", q:"Quel est le traitement de première ligne des leucémies aiguës ?", a:"La chimiothérapie intensive, visant la rémission complète."},
+{cat:"transfu", q:"Quel médicament a révolutionné le traitement de la LMC BCR-ABL+ ?", a:"L'imatinib (Glivec), inhibiteur de tyrosine kinase."},
+{cat:"transfu", q:"Quel est le seul traitement curatif de nombreuses hémopathies graves ?", a:"L'allogreffe de moelle osseuse."},
+{cat:"transfu", q:"Quel est le rôle thérapeutique de l'érythropoïétine (EPO) ?", a:"Stimuler la production de GR pour traiter l'anémie des maladies chroniques."},
+{cat:"transfu", q:"De combien augmente l'hémoglobine par unité de CGR transfusée ?", a:"Environ 1 g/dL par unité."},
+{cat:"transfu", q:"Quand transfuse-t-on des plaquettes ?", a:"Si thrombopénie < 10 000/µL, ou < 20 000/µL avec fièvre/hémorragie."},
+{cat:"transfu", q:"Que remplacent les transfusions de plasma frais congelé ?", a:"Les facteurs de coagulation et les inhibiteurs physiologiques."},
+{cat:"transfu", q:"Quand utilise-t-on le fibrinogène cryoprécipité ?", a:"Hypofibrinogénémie (< 1 g/L) ou dysfibrinogénémie."},
+{cat:"transfu", q:"Quelle est la complication transfusionnelle immédiate la plus grave ?", a:"L'incompatibilité ABO, avec hémolyse et risque de décès."},
+{cat:"transfu", q:"Que provoquent les transfusions répétées sur le plan immunologique ?", a:"Une allo-immunisation (anticorps anti-HLA ou anti-érythrocytaires)."},
+{cat:"transfu", q:"Comment définit-on une réaction transfusionnelle fébrile ?", a:"Élévation de température > 1°C liée à l'incompatibilité HLA."},
+{cat:"transfu", q:"Que surveille l'hémovigilance ?", a:"Les accidents transfusionnels et les infections transmissibles (VIH, hépatites, syphilis)."},
+{cat:"transfu", q:"Quel est le rôle des facteurs de croissance G-CSF/GM-CSF ?", a:"Stimuler la production de leucocytes et réduire les infections."},
+{cat:"transfu", q:"Dans quelles pathologies l'interféron alpha est-il un traitement de 1ère ligne ?", a:"La polycythémie vera et la thrombocythémie essentielle."},
+{cat:"transfu", q:"Que comprennent les soins supportifs en hématologie ?", a:"Hygiène transfusionnelle, éradication des foyers infectieux, prévention thromboembolique."},
+
+// ===================== VOLUME 2 =====================
+// --- GROUPES SANGUINS & IMMUNOHÉMATOLOGIE ---
+{cat:"groupes", q:"Sur quel chromosome se situe le locus déterminant le système ABO ?", a:"Le chromosome 9."},
+{cat:"groupes", q:"Pourquoi le groupe O est-il donneur universel ?", a:"Il ne possède ni antigène A ni antigène B à la surface des hématies."},
+{cat:"groupes", q:"Pourquoi le groupe AB est-il receveur universel ?", a:"Il ne possède pas d'anticorps anti-A ni anti-B dans le plasma."},
+{cat:"groupes", q:"Quel antigène définit le statut Rh positif ou négatif ?", a:"L'antigène D, le plus immunogène du système Rhésus."},
+{cat:"groupes", q:"Quel est le mécanisme de la maladie hémolytique du nouveau-né ?", a:"Passage transplacentaire d'anticorps maternels anti-D détruisant les GR fœtaux Rh+."},
+{cat:"groupes", q:"À quoi sert l'immunoglobuline anti-D (Rhogam) ?", a:"Prévenir l'allo-immunisation chez la femme Rh négatif enceinte d'un fœtus Rh+."},
+{cat:"groupes", q:"Que détecte le test de Coombs direct ?", a:"Les anticorps ou complément fixés sur les GR du patient."},
+{cat:"groupes", q:"Que détecte le test de Coombs indirect ?", a:"Les anticorps anti-érythrocytaires libres dans le sérum du patient."},
+{cat:"groupes", q:"Citez des systèmes de groupes sanguins mineurs à risque de réaction transfusionnelle retardée.", a:"Kell, Duffy, Kidd, MNS."},
+{cat:"groupes", q:"Quels examens sont obligatoires avant toute transfusion ?", a:"Groupe ABO-Rh et recherche d'agglutinines irrégulières (RAI)."},
+{cat:"groupes", q:"À quoi sert le typage HLA en hématologie ?", a:"Vérifier la compatibilité en transplantation de cellules souches."},
+{cat:"groupes", q:"Quel est l'intérêt du sang de cordon ombilical ?", a:"Source alternative de cellules souches hématopoïétiques riche en progéniteurs immatures."},
+
+// --- HÉMOGLOBINOPATHIES & ENZYMOPATHIES ---
+{cat:"hemoglobinopathies", q:"Quelle est la transmission du déficit en G6PD et son déclencheur classique ?", a:"Liée à l'X ; hémolyse aiguë après médicaments ou fèves."},
+{cat:"hemoglobinopathies", q:"Quelle est la 2e enzymopathie érythrocytaire la plus fréquente ?", a:"Le déficit en pyruvate kinase."},
+{cat:"hemoglobinopathies", q:"À quoi sert l'électrophorèse de l'hémoglobine ?", a:"Séparer les variantes (HbA, HbA2, HbF, HbS, HbC) selon leur mobilité électrique."},
+{cat:"hemoglobinopathies", q:"Quel mécanisme déclenche la crise vaso-occlusive drépanocytaire ?", a:"La polymérisation de l'HbS en conditions hypoxiques."},
+{cat:"hemoglobinopathies", q:"Quelle est la complication pulmonaire grave de la drépanocytose ?", a:"Le syndrome thoracique aigu."},
+{cat:"hemoglobinopathies", q:"Comment agit l'hydroxyurée dans la drépanocytose ?", a:"Elle augmente l'HbF et réduit les crises vaso-occlusives."},
+{cat:"hemoglobinopathies", q:"Sur quel chromosome sont situés les gènes de globine alpha ?", a:"Le chromosome 16 (alpha-thalassémie = délétions de ces gènes)."},
+{cat:"hemoglobinopathies", q:"Qu'exige la bêta-thalassémie majeure (maladie de Cooley) ?", a:"Des transfusions régulières dès la petite enfance."},
+{cat:"hemoglobinopathies", q:"Que caractérise la méthémoglobinémie ?", a:"L'oxydation du fer de l'Hb (Fe2+ → Fe3+) empêchant le transport d'oxygène."},
+{cat:"hemoglobinopathies", q:"Quel est l'antidote de la méthémoglobinémie sévère ?", a:"Le bleu de méthylène."},
+
+// --- FER & MÉTABOLISME ---
+{cat:"fer", q:"Quelle hormone régule l'absorption intestinale du fer, et comment ?", a:"L'hepcidine, en inhibant la ferroportine."},
+{cat:"fer", q:"Quel gène est en cause dans l'hémochromatose héréditaire ?", a:"Le gène HFE (transmission autosomique récessive)."},
+{cat:"fer", q:"Quelles atteintes provoque la surcharge en fer chronique ?", a:"Hépatique, cardiaque et endocrinienne (diabète bronzé)."},
+{cat:"fer", q:"Citez deux chélateurs du fer.", a:"Déféroxamine et déférasirox."},
+{cat:"fer", q:"Quel seuil de saturation de la transferrine oriente vers une surcharge en fer ?", a:"> 45 %."},
+{cat:"fer", q:"Pourquoi la ferritine peut-elle être faussement élevée ?", a:"Car c'est aussi une protéine de l'inflammation."},
+{cat:"fer", q:"Que révèle la coloration de Perls dans l'anémie sidéroblastique ?", a:"Une accumulation de fer dans les mitochondries des érythroblastes."},
+{cat:"fer", q:"Quel est le traitement de référence de l'hémochromatose non compliquée ?", a:"La saignée thérapeutique."},
+
+// --- PRONOSTIC & CLASSIFICATIONS ---
+{cat:"pronostic", q:"Sur quels critères repose la classification OMS des hémopathies malignes ?", a:"Morphologiques, immunophénotypiques, cytogénétiques et moléculaires."},
+{cat:"pronostic", q:"Quels scores évaluent le pronostic de la LMC ?", a:"Le score de Sokal et le score EUTOS."},
+{cat:"pronostic", q:"Quels systèmes stadifient la LLC ?", a:"La classification de Binet et le système de Rai."},
+{cat:"pronostic", q:"Quel score évalue le pronostic des syndromes myélodysplasiques ?", a:"L'IPSS-R."},
+{cat:"pronostic", q:"Sur quoi repose la classification d'Ann Arbor ?", a:"Le nombre et la localisation des aires ganglionnaires atteintes (lymphomes)."},
+{cat:"pronostic", q:"Que prédit le score IPI ?", a:"Le pronostic des lymphomes non hodgkiniens (âge, stade, LDH)."},
+{cat:"pronostic", q:"Quels systèmes stadifient le myélome multiple ?", a:"Durie-Salmon et l'ISS (International Staging System)."},
+{cat:"pronostic", q:"Dans quelles pathologies retrouve-t-on la mutation JAK2 V617F ?", a:"Polycythémie vera, thrombocytémie essentielle, myélofibrose."},
+{cat:"pronostic", q:"Quel est le pronostic associé à la mutation FLT3-ITD en LMA ?", a:"Un pronostic défavorable ; c'est aussi une cible thérapeutique."},
+{cat:"pronostic", q:"Quelle leucémie est associée à la translocation t(15;17) ?", a:"La leucémie aiguë promyélocytaire (risque hémorragique par CIVD)."},
+{cat:"pronostic", q:"Quel lymphome est associé à la translocation t(8;14) ?", a:"Le lymphome de Burkitt (implique le gène MYC)."},
+{cat:"pronostic", q:"Que permet la détection de la maladie résiduelle minimale (MRM) ?", a:"Guider la décision thérapeutique dans les leucémies aiguës."},
+
+// --- THÉRAPIES AVANCÉES ---
+{cat:"therapies", q:"Qu'est-ce qu'une CAR-T cell ?", a:"Un lymphocyte T modifié pour exprimer un récepteur chimérique anti-tumoral."},
+{cat:"therapies", q:"Quelle est la cible du rituximab ?", a:"L'antigène CD20 (lymphomes B, cytopénies auto-immunes)."},
+{cat:"therapies", q:"Quelle complication grave accompagne les CAR-T et anticorps bispécifiques ?", a:"Le syndrome de relargage cytokinique."},
+{cat:"therapies", q:"Comment agit le venetoclax ?", a:"Inhibiteur de BCL-2, induit l'apoptose des cellules leucémiques (LLC, LMA)."},
+{cat:"therapies", q:"Comment agissent les inhibiteurs de BTK (ibrutinib) ?", a:"Blocage de la signalisation du récepteur des cellules B (LLC, lymphome du manteau)."},
+{cat:"therapies", q:"Quelle est la différence entre autogreffe et allogreffe ?", a:"Autogreffe : cellules du patient ; allogreffe : cellules d'un donneur avec effet GVL."},
+{cat:"therapies", q:"Qu'est-ce que la maladie du greffon contre l'hôte (GVHD) ?", a:"Les cellules immunitaires du donneur attaquent les tissus du receveur."},
+{cat:"therapies", q:"Quelle est la différence entre conditionnement myéloablatif et à intensité réduite ?", a:"Le myéloablatif détruit totalement la moelle du receveur avant greffe."},
+{cat:"therapies", q:"Comment agit le blinatumomab (anticorps bispécifique) ?", a:"Il relie une cellule tumorale et un lymphocyte T cytotoxique."},
+{cat:"therapies", q:"Quelle est la cible du daratumumab ?", a:"Le CD38, dans le myélome multiple réfractaire."},
+{cat:"therapies", q:"Comment traite-t-on la leucémie aiguë promyélocytaire ?", a:"ATRA (acide tout-trans-rétinoïque) associé à l'arsenic."},
+
+// --- PÉDIATRIE & GROSSESSE ---
+{cat:"pediatrie", q:"Que devient l'hémoglobine fœtale après la naissance ?", a:"Elle est progressivement remplacée par l'hémoglobine adulte."},
+{cat:"pediatrie", q:"Quand survient l'anémie physiologique du nourrisson ?", a:"Vers 2-3 mois, par baisse transitoire de l'érythropoïèse."},
+{cat:"pediatrie", q:"Quelle est la cause de la maladie hémorragique du nouveau-né ?", a:"Un déficit transitoire en vitamine K."},
+{cat:"pediatrie", q:"Quel est le mécanisme du purpura thrombopénique néonatal allo-immun ?", a:"Passage transplacentaire d'anticorps maternels contre les antigènes plaquettaires fœtaux."},
+{cat:"pediatrie", q:"Quelle est l'origine de l'anémie physiologique de la grossesse ?", a:"Une hémodilution (volume plasmatique augmenté plus que la masse globulaire)."},
+{cat:"pediatrie", q:"Pourquoi la grossesse augmente-t-elle le risque thromboembolique ?", a:"C'est un état d'hypercoagulabilité physiologique."},
+{cat:"pediatrie", q:"Que signifie l'acronyme HELLP ?", a:"Hémolyse, élévation des enzymes hépatiques, thrombopénie (complication de la pré-éclampsie)."},
+{cat:"pediatrie", q:"Quel est le pronostic de la LLA de l'enfant ?", a:"Excellent, taux de guérison > 85 % avec les protocoles actuels."},
+{cat:"pediatrie", q:"Quelles tumeurs pédiatriques peuvent simuler une hémopathie ?", a:"Le neuroblastome et le rétinoblastome (infiltration médullaire)."},
+{cat:"pediatrie", q:"Qu'est-ce que l'anémie de Fanconi ?", a:"Une aplasie médullaire progressive génétique avec malformations congénitales."},
+
+// --- URGENCES HÉMATOLOGIQUES ---
+{cat:"urgences", q:"Quels troubles métaboliques caractérisent le syndrome de lyse tumorale ?", a:"Hyperkaliémie, hyperuricémie, hyperphosphatémie."},
+{cat:"urgences", q:"Comment agit la rasburicase ?", a:"Elle dégrade l'acide urique (prévention/traitement du syndrome de lyse tumorale)."},
+{cat:"urgences", q:"Qu'est-ce que la leucostase ?", a:"Une obstruction microvasculaire par hyperleucocytose majeure (> 100 000/µL)."},
+{cat:"urgences", q:"Quelles hémopathies peuvent provoquer une compression médullaire ?", a:"Le myélome multiple et les lymphomes vertébraux."},
+{cat:"urgences", q:"Quels lymphomes peuvent provoquer un syndrome cave supérieur ?", a:"Les lymphomes médiastinaux volumineux."},
+{cat:"urgences", q:"Que nécessite l'aplasie fébrile post-chimiothérapie ?", a:"Une antibiothérapie probabiliste à large spectre immédiate."},
+{cat:"urgences", q:"Comment définit-on la neutropénie fébrile ?", a:"T° > 38,3°C avec PNN < 500/µL."},
+{cat:"urgences", q:"Qu'est-ce que la thrombopénie induite par l'héparine (TIH) ?", a:"Une réaction immunologique paradoxale provoquant thrombose malgré l'anticoagulation."},
+{cat:"urgences", q:"À quoi sert le score des 4T ?", a:"Évaluer la probabilité clinique de TIH avant confirmation biologique."},
+{cat:"urgences", q:"Qu'est-ce que le syndrome catastrophique des antiphospholipides ?", a:"Une forme sévère avec thromboses multiples simultanées, souvent fatale."},
+{cat:"urgences", q:"Quel traitement d'urgence traite l'hyperviscosité sanguine ?", a:"La plasmaphérèse."},
+{cat:"urgences", q:"Quels paramètres intègre le score ISTH de CIVD ?", a:"Plaquettes, D-dimères, TP et fibrinogène."},
+
+// --- AUTO-IMMUNITÉ & DIVERS ---
+{cat:"autoimmun", q:"Quel type d'anticorps et quel mécanisme dans l'AHAI à anticorps chauds ?", a:"IgG actives à 37°C, hémolyse extravasculaire splénique."},
+{cat:"autoimmun", q:"Quel type d'anticorps dans l'AHAI à agglutinines froides ?", a:"IgM actives à basse température, hémolyse intravasculaire."},
+{cat:"autoimmun", q:"Qu'associe le syndrome d'Evans ?", a:"Anémie hémolytique auto-immune et thrombopénie immunologique."},
+{cat:"autoimmun", q:"Que caractérise le syndrome des antiphospholipides ?", a:"Thromboses récurrentes et/ou pertes fœtales avec anticorps antiphospholipides."},
+{cat:"autoimmun", q:"Qu'est-ce que la cryoglobulinémie et à quoi est-elle associée ?", a:"Immunoglobulines précipitant au froid ; liée à l'hépatite C ou aux hémopathies."},
+{cat:"autoimmun", q:"À quelle infection est associée la maladie des agglutinines froides secondaire ?", a:"Le mycoplasme (ou un syndrome lymphoprolifératif)."},
+{cat:"autoimmun", q:"Quel est le risque principal après splénectomie ?", a:"Infections à germes encapsulés."},
+{cat:"autoimmun", q:"Quelles vaccinations sont recommandées avant splénectomie ?", a:"Anti-pneumococcique, anti-méningococcique, anti-Haemophilus."},
+{cat:"autoimmun", q:"Quel déficit enzymatique cause le PTT acquis ?", a:"Un déficit sévère en activité ADAMTS13 par anticorps inhibiteurs."},
+{cat:"autoimmun", q:"À quoi est associé le syndrome hémolytique et urémique typique ?", a:"Une infection à E. coli producteur de shigatoxine, chez l'enfant."},
+{cat:"autoimmun", q:"Qu'est-ce que les porphyries ?", a:"Des maladies métaboliques héréditaires liées à un déficit dans la synthèse de l'hème."},
+{cat:"autoimmun", q:"Comment se manifeste la porphyrie aiguë intermittente ?", a:"Douleurs abdominales, troubles neuropsychiatriques, urines rouge porto à la lumière."},
+
+// --- HISTOIRE, BIOMARQUEURS & LABORATOIRE ---
+{cat:"labo", q:"Qui a découvert le système ABO, et quand ?", a:"Karl Landsteiner, en 1900 (prix Nobel en 1930)."},
+{cat:"labo", q:"À quoi sert la cytométrie en flux ?", a:"Analyser rapidement les populations cellulaires selon leurs marqueurs de surface."},
+{cat:"labo", q:"Sur quels principes repose le comptage automatisé des cellules sanguines ?", a:"Impédance électrique et diffraction laser."},
+{cat:"labo", q:"À quoi servent les D-dimères ?", a:"Exclure une thrombose veineuse/embolie pulmonaire en cas de faible probabilité clinique."},
+{cat:"labo", q:"Que reflète la bêta-2-microglobuline ?", a:"Un marqueur pronostique du myélome multiple et de certains lymphomes."},
+{cat:"labo", q:"Que détecte l'électrophorèse des protéines sériques ?", a:"Un pic monoclonal évocateur de gammapathie monoclonale."},
+{cat:"labo", q:"Que permet l'immunofixation ?", a:"Identifier la classe et le type de chaîne légère d'une Ig monoclonale."},
+{cat:"labo", q:"À quoi sert le dosage des chaînes légères libres (kappa/lambda) ?", a:"Diagnostic et suivi du myélome multiple et de l'amylose AL."},
+{cat:"labo", q:"Que reflète la réticulocytose ?", a:"L'activité de régénération médullaire (cause centrale ou périphérique de l'anémie)."},
+{cat:"labo", q:"À quoi sert le test de fragilité osmotique ?", a:"Évaluer la résistance des GR à l'hémolyse en milieu hypotonique (sphérocytose)."},
+{cat:"labo", q:"Quel examen est l'examen de référence pour le diagnostic des lymphomes ?", a:"La ponction-biopsie ganglionnaire."},
+{cat:"labo", q:"Qu'est-ce que l'aphérèse thérapeutique ?", a:"Séparer et retirer sélectivement un composant sanguin pathologique."},
+];
+
+// ===================== QCM (questions à choix multiples) =====================
+const MCQ = [
+{cat:"physio", q:"Quel pourcentage du poids corporel représente le sang ?", options:["3 %","7 %","12 %","15 %"], correct:1, exp:"Le sang représente environ 7 % du poids corporel."},
+{cat:"physio", q:"Quelle est la durée de vie moyenne d'un globule rouge ?", options:["30 jours","60 jours","120 jours","200 jours"], correct:2, exp:"Les globules rouges vivent environ 120 jours."},
+{cat:"physio", q:"Quelle hormone stimule la production de globules rouges ?", options:["Hepcidine","Érythropoïétine","Thrombopoïétine","Ferroportine"], correct:1, exp:"L'érythropoïétine (EPO), sécrétée par le rein, stimule l'érythropoïèse."},
+{cat:"physio", q:"Combien de chaînes de globine compose l'hémoglobine adulte (HbA) ?", options:["2","3","4","6"], correct:2, exp:"HbA comprend 2 chaînes α et 2 chaînes β."},
+{cat:"anemie", q:"Un VGM > 100 fL définit une anémie :", options:["Microcytaire","Normocytaire","Macrocytaire","Hypochrome"], correct:2, exp:"Un VGM > 100 fL correspond à une anémie macrocytaire."},
+{cat:"anemie", q:"Quelle carence provoque une anémie microcytaire hypochrome typique ?", options:["Vitamine B12","Folates","Fer","Vitamine K"], correct:2, exp:"La carence martiale (en fer) est la cause classique d'anémie microcytaire hypochrome."},
+{cat:"anemie", q:"Quelle est l'origine de la sphérocytose héréditaire ?", options:["Déficit en G6PD","Anomalie des protéines membranaires du GR","Mutation de l'hémoglobine","Déficit en vitamine B12"], correct:1, exp:"C'est une anomalie génétique des protéines membranaires du globule rouge."},
+{cat:"anemie", q:"Quelle anomalie caractérise la drépanocytose ?", options:["HbA2 élevée","Hémoglobine S polymérisable","Déficit en fer","Excès de fer"], correct:1, exp:"L'hémoglobine S polymérise en conditions hypoxiques, provoquant les crises vaso-occlusives."},
+{cat:"anemie", q:"Quel marqueur est augmenté dans l'anémie hémolytique ?", options:["Ferritine","LDH et bilirubine indirecte","Transferrine","Fibrinogène"], correct:1, exp:"LDH et bilirubine indirecte sont augmentés par la destruction accélérée des GR."},
+{cat:"leuco", q:"Quelle translocation caractérise la leucémie myéloïde chronique ?", options:["t(8;14)","t(15;17)","t(9;22)","t(14;18)"], correct:2, exp:"t(9;22) crée le gène de fusion BCR-ABL, caractéristique de la LMC."},
+{cat:"leuco", q:"Quelle cellule est caractéristique du lymphome de Hodgkin ?", options:["Cellule de Reed-Sternberg","Lymphoblaste","Plasmocyte","Promyélocyte"], correct:0, exp:"La cellule de Reed-Sternberg est pathognomonique du lymphome de Hodgkin."},
+{cat:"leuco", q:"Quelle population touche principalement la leucémie lymphoblastique aiguë (LLA) ?", options:["Les personnes âgées","Les femmes enceintes","L'enfant","Les nouveau-nés uniquement"], correct:2, exp:"La LLA touche principalement l'enfant."},
+{cat:"leuco", q:"Que produit en excès le myélome multiple ?", options:["Lymphocytes B matures","Immunoglobuline monoclonale","Blastes myéloïdes","Éosinophiles"], correct:1, exp:"Le myélome multiple est une prolifération de plasmocytes produisant une Ig monoclonale."},
+{cat:"leuco", q:"Quelle hémopathie est associée à une hyper-leucocytose et des blastes immatures ?", options:["Anémie ferriprive","Leucémie aiguë","Thrombocytose essentielle","Hémochromatose"], correct:1, exp:"La leucémie aiguë associe blastes immatures, anémie, thrombopénie et hyperleucocytose."},
+{cat:"coag", q:"Quel facteur est déficitaire dans l'hémophilie A ?", options:["Facteur VII","Facteur VIII","Facteur IX","Facteur XI"], correct:1, exp:"L'hémophilie A est un déficit en facteur VIII."},
+{cat:"coag", q:"Que mesure le temps de céphaline activée (TCA) ?", options:["La voie extrinsèque","La voie intrinsèque et commune","La fonction plaquettaire","Le fibrinogène seul"], correct:1, exp:"Le TCA explore la voie intrinsèque et la voie commune."},
+{cat:"coag", q:"Quelle anomalie est la thrombophilie familiale la plus fréquente ?", options:["Déficit en protéine C","Déficit en antithrombine III","Facteur V Leiden","Déficit en protéine S"], correct:2, exp:"La résistance à la protéine C activée due au facteur V Leiden est la plus fréquente."},
+{cat:"coag", q:"Comment agit la warfarine ?", options:["Inhibition directe de la thrombine","Inhibition des facteurs vitamine K-dépendants","Inhibition de l'agrégation plaquettaire","Activation de l'antithrombine"], correct:1, exp:"La warfarine inhibe les facteurs II, VII, IX, X, vitamine K-dépendants."},
+{cat:"coag", q:"Quelle numération plaquettaire définit une thrombopénie ?", options:["< 400 000/µL","< 250 000/µL","< 150 000/µL","< 50 000/µL"], correct:2, exp:"La thrombopénie est définie par un taux < 150 000/µL."},
+{cat:"coag", q:"Que caractérise le TTP (purpura thrombotique thrombocytopénique) ?", options:["Thrombopénie isolée","Thrombopénie + anémie hémolytique microangiopathique + atteinte neurologique","Hyperplaquettose","Déficit en facteur VIII"], correct:1, exp:"Le TTP associe cette triade caractéristique."},
+{cat:"diag", q:"Que permet le myélogramme ?", options:["Analyser la fonction rénale","Évaluer la production hématopoïétique médullaire","Mesurer la coagulation","Détecter une infection urinaire"], correct:1, exp:"Le myélogramme analyse la moelle osseuse pour diagnostiquer les hémopathies."},
+{cat:"diag", q:"Que détecte la technique FISH ?", options:["Les carences vitaminiques","Les anomalies chromosomales et translocations","Le taux d'hémoglobine","La fonction plaquettaire"], correct:1, exp:"La FISH détecte les anomalies chromosomales et translocations récurrentes."},
+{cat:"transfu", q:"De combien augmente l'hémoglobine par unité de CGR transfusée ?", options:["0,5 g/dL","1 g/dL","2 g/dL","3 g/dL"], correct:1, exp:"Chaque unité de CGR augmente l'Hb d'environ 1 g/dL."},
+{cat:"transfu", q:"Quelle est la complication transfusionnelle immédiate la plus grave ?", options:["Allo-immunisation HLA","Incompatibilité ABO","Réaction fébrile simple","Surcharge en fer"], correct:1, exp:"L'incompatibilité ABO provoque une hémolyse aiguë pouvant être fatale."},
+{cat:"transfu", q:"Quel médicament a révolutionné le traitement de la LMC ?", options:["Rituximab","Imatinib","Venetoclax","Daratumumab"], correct:1, exp:"L'imatinib, inhibiteur de tyrosine kinase, cible la protéine BCR-ABL."},
+{cat:"groupes", q:"Pourquoi le groupe sanguin O est-il donneur universel ?", options:["Il n'a pas d'antigène Rh","Il n'a ni antigène A ni B","Il n'a pas d'anticorps","Il a tous les antigènes"], correct:1, exp:"Absence d'antigènes A et B en surface des hématies."},
+{cat:"groupes", q:"Que détecte le test de Coombs direct ?", options:["Les anticorps libres dans le sérum","Les anticorps fixés sur les GR du patient","Le groupe ABO","Le facteur Rhésus uniquement"], correct:1, exp:"Le Coombs direct détecte les anticorps/complément fixés sur les hématies du patient."},
+{cat:"groupes", q:"Quel antigène définit le statut Rh positif ?", options:["Antigène C","Antigène D","Antigène E","Antigène K"], correct:1, exp:"L'antigène D est le plus immunogène du système Rhésus."},
+{cat:"groupes", q:"À quoi sert l'immunoglobuline anti-D (Rhogam) ?", options:["Traiter l'anémie ferriprive","Prévenir l'allo-immunisation Rh chez la femme enceinte Rh-","Traiter l'hémophilie","Stimuler l'érythropoïèse"], correct:1, exp:"Elle prévient l'allo-immunisation anti-D chez la mère Rh négatif."},
+{cat:"hemoglobinopathies", q:"Quel est le déclencheur classique d'hémolyse dans le déficit en G6PD ?", options:["Le stress","Les fèves ou certains médicaments","Le froid","L'altitude"], correct:1, exp:"L'exposition aux fèves ou à certains médicaments oxydants déclenche l'hémolyse en cas de déficit G6PD."},
+{cat:"hemoglobinopathies", q:"Comment agit l'hydroxyurée dans la drépanocytose ?", options:["Elle diminue l'HbF","Elle augmente l'HbF","Elle augmente l'HbS","Elle chélate le fer"], correct:1, exp:"L'hydroxyurée augmente l'hémoglobine fœtale, réduisant les crises vaso-occlusives."},
+{cat:"hemoglobinopathies", q:"Quel est l'antidote de la méthémoglobinémie sévère ?", options:["Vitamine K","Bleu de méthylène","Déféroxamine","Protamine"], correct:1, exp:"Le bleu de méthylène est l'antidote de référence."},
+{cat:"fer", q:"Quelle hormone inhibe la ferroportine pour réguler l'absorption du fer ?", options:["Hepcidine","Érythropoïétine","Transferrine","Ferritine"], correct:0, exp:"L'hepcidine régule l'absorption intestinale du fer en inhibant la ferroportine."},
+{cat:"fer", q:"Quel est le traitement de référence de l'hémochromatose héréditaire non compliquée ?", options:["Chélation du fer","Saignée thérapeutique","Transfusion","Splénectomie"], correct:1, exp:"La saignée thérapeutique reste le traitement de référence."},
+{cat:"fer", q:"Quel gène est muté dans l'hémochromatose héréditaire ?", options:["BCR-ABL","HFE","JAK2","FLT3"], correct:1, exp:"Le gène HFE est en cause dans l'hémochromatose héréditaire."},
+{cat:"pronostic", q:"Quelle mutation est retrouvée dans la majorité des polycythémies vera ?", options:["BCR-ABL","JAK2 V617F","FLT3-ITD","MYC"], correct:1, exp:"La mutation JAK2 V617F est présente dans la majorité des PV."},
+{cat:"pronostic", q:"Quelle translocation caractérise la leucémie aiguë promyélocytaire ?", options:["t(9;22)","t(8;14)","t(15;17)","t(14;18)"], correct:2, exp:"t(15;17) caractérise la LAP, avec risque hémorragique par CIVD."},
+{cat:"pronostic", q:"Quel score évalue le pronostic de la LMC au diagnostic ?", options:["Score de Sokal","Score IPI","Classification de Binet","Score ISS"], correct:0, exp:"Le score de Sokal (et EUTOS) évalue le pronostic de la LMC."},
+{cat:"pronostic", q:"Sur quoi repose la classification d'Ann Arbor ?", options:["Le taux de blastes","Les aires ganglionnaires atteintes","Le taux d'hémoglobine","La cytogénétique"], correct:1, exp:"Ann Arbor stadifie les lymphomes selon les aires ganglionnaires atteintes."},
+{cat:"therapies", q:"Quelle est la cible du rituximab ?", options:["CD20","CD38","BCL-2","BTK"], correct:0, exp:"Le rituximab est un anticorps monoclonal anti-CD20."},
+{cat:"therapies", q:"Qu'est-ce qu'une CAR-T cell ?", options:["Un anticorps monoclonal","Un lymphocyte T modifié génétiquement","Une cellule souche embryonnaire","Un facteur de croissance"], correct:1, exp:"Une CAR-T cell est un lymphocyte T modifié pour exprimer un récepteur chimérique anti-tumoral."},
+{cat:"therapies", q:"Comment traite-t-on la leucémie aiguë promyélocytaire ?", options:["Chimiothérapie seule","ATRA + arsenic","Splénectomie","Interféron seul"], correct:1, exp:"L'ATRA associé à l'arsenic induit la différenciation des promyélocytes."},
+{cat:"therapies", q:"Quelle complication grave est associée aux CAR-T cells ?", options:["Aplasie médullaire","Syndrome de relargage cytokinique","Hémochromatose","Purpura thrombopénique"], correct:1, exp:"Le syndrome de relargage cytokinique est une complication potentiellement grave."},
+{cat:"pediatrie", q:"Que signifie l'acronyme HELLP ?", options:["Hémolyse, enzymes hépatiques élevées, thrombopénie","Hyperleucocytose et lymphome","Hémophilie et leucémie","Hémorragie et purpura"], correct:0, exp:"HELLP = Hémolyse, élévation des enzymes hépatiques, thrombopénie."},
+{cat:"pediatrie", q:"Quelle est la cause de la maladie hémorragique du nouveau-né ?", options:["Déficit en fer","Déficit en vitamine K","Déficit en facteur VIII","Excès de plaquettes"], correct:1, exp:"Un déficit transitoire en vitamine K justifie la supplémentation systématique à la naissance."},
+{cat:"pediatrie", q:"Quel est le pronostic actuel de la LLA de l'enfant ?", options:["< 20 % de guérison","50 % de guérison","> 85 % de guérison","Pronostic sombre systématique"], correct:2, exp:"Les protocoles actuels permettent > 85 % de guérison chez l'enfant."},
+{cat:"urgences", q:"Quels troubles caractérisent le syndrome de lyse tumorale ?", options:["Hypokaliémie et hypouricémie","Hyperkaliémie, hyperuricémie, hyperphosphatémie","Hypercalcémie isolée","Hyponatrémie isolée"], correct:1, exp:"La destruction cellulaire massive libère potassium, acide urique et phosphate."},
+{cat:"urgences", q:"Comment définit-on la neutropénie fébrile ?", options:["T°>38,3°C et PNN<500/µL","T°>37°C et PNN<1000/µL","T°>39°C et PNN<2000/µL","Fièvre isolée sans critère de PNN"], correct:0, exp:"C'est la définition classique de la neutropénie fébrile."},
+{cat:"urgences", q:"Qu'est-ce que la leucostase ?", options:["Une carence en leucocytes","Une obstruction microvasculaire par hyperleucocytose majeure","Une hémolyse aiguë","Une allergie transfusionnelle"], correct:1, exp:"La leucostase survient en cas d'hyperleucocytose > 100 000/µL."},
+{cat:"urgences", q:"À quoi sert le score des 4T ?", options:["Évaluer une CIVD","Évaluer la probabilité de TIH","Stadifier un lymphome","Évaluer le risque hémorragique en chirurgie"], correct:1, exp:"Le score des 4T évalue la probabilité clinique de thrombopénie induite par l'héparine."},
+{cat:"autoimmun", q:"Quel type d'anticorps est impliqué dans l'AHAI à anticorps chauds ?", options:["IgM","IgG","IgA","IgE"], correct:1, exp:"Les IgG actives à 37°C provoquent une hémolyse extravasculaire splénique."},
+{cat:"autoimmun", q:"Qu'associe le syndrome d'Evans ?", options:["Anémie hémolytique + thrombopénie auto-immunes","Anémie + hyperleucocytose","Thrombopénie + hypercoagulabilité","Hémophilie + thrombose"], correct:0, exp:"Le syndrome d'Evans associe AHAI et thrombopénie immunologique."},
+{cat:"autoimmun", q:"À quoi est due le PTT acquis ?", options:["Déficit en facteur VIII","Déficit sévère en ADAMTS13","Excès de facteur Willebrand","Déficit en G6PD"], correct:1, exp:"Un déficit sévère en ADAMTS13 par anticorps inhibiteurs cause le PTT acquis."},
+{cat:"autoimmun", q:"Quel est le risque principal après splénectomie ?", options:["Thrombose veineuse","Infections à germes encapsulés","Hémorragie chronique","Insuffisance rénale"], correct:1, exp:"Le risque infectieux (pneumocoque, méningocoque, Haemophilus) justifie la vaccination avant splénectomie."},
+{cat:"labo", q:"Qui a découvert le système ABO en 1900 ?", options:["Louis Pasteur","Karl Landsteiner","Alexander Fleming","Robert Koch"], correct:1, exp:"Karl Landsteiner a reçu le prix Nobel en 1930 pour cette découverte."},
+{cat:"labo", q:"À quoi servent les D-dimères ?", options:["Diagnostiquer une anémie","Exclure une thrombose en cas de faible probabilité clinique","Mesurer la fonction plaquettaire","Doser le fer sérique"], correct:1, exp:"Un taux normal de D-dimères permet d'exclure une TVP/EP à faible probabilité clinique."},
+{cat:"labo", q:"Que détecte l'électrophorèse des protéines sériques ?", options:["Un déficit en fer","Un pic monoclonal (gammapathie)","Une anémie hémolytique","Une carence en vitamine B12"], correct:1, exp:"Elle détecte un pic monoclonal évocateur de gammapathie monoclonale."},
+{cat:"labo", q:"À quoi sert le test de fragilité osmotique ?", options:["Diagnostiquer la sphérocytose héréditaire","Diagnostiquer l'hémophilie","Mesurer la coagulation","Diagnostiquer une leucémie"], correct:0, exp:"Il évalue la résistance des GR à l'hémolyse en milieu hypotonique, utile dans la sphérocytose."},
+];
+
+const CATEGORY_LABELS = {
+  physio: "Physiologie & Hématopoïèse",
+  anemie: "Anémies",
+  leuco: "Leucocytes & Hémopathies malignes",
+  coag: "Coagulation & Hémostase",
+  diag: "Diagnostic & Laboratoire",
+  transfu: "Traitements & Transfusion",
+  groupes: "Groupes sanguins & Immunohématologie",
+  hemoglobinopathies: "Hémoglobinopathies & Enzymopathies",
+  fer: "Fer & Métabolisme",
+  pronostic: "Pronostic & Classifications",
+  therapies: "Thérapies avancées",
+  pediatrie: "Pédiatrie & Grossesse",
+  urgences: "Urgences hématologiques",
+  autoimmun: "Auto-immunité & Divers",
+  labo: "Histoire & Biomarqueurs"
+};
+
+// ============ SHARED HELPERS ============
+function shuffleArr(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+const ALL_CATS = Object.keys(CATEGORY_LABELS);
+
+// ============ MODE SWITCH ============
+const modeBtns = document.querySelectorAll('.mode-btn');
+modeBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    modeBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + btn.dataset.mode).classList.add('active');
+  });
+});
+
+// ============ FLASHCARDS ============
+let fcDeck = FLASHCARDS.map((c, i) => ({...c, origIndex: i}));
+let fcIndex = 0;
+let fcActiveCats = new Set(ALL_CATS);
+
+function renderChips(containerId, activeCats, onToggle) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  ALL_CATS.forEach(cat => {
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (activeCats.has(cat) ? ' on' : '');
+    chip.textContent = CATEGORY_LABELS[cat];
+    chip.addEventListener('click', () => onToggle(cat, chip));
+    el.appendChild(chip);
+  });
+}
+
+function fcApplyFilter() {
+  const filtered = FLASHCARDS.map((c,i)=>({...c, origIndex:i})).filter(c => fcActiveCats.has(c.cat));
+  fcDeck = filtered.length ? filtered : FLASHCARDS.map((c,i)=>({...c, origIndex:i}));
+  fcIndex = 0;
+  renderFlashcard();
+}
+
+renderChips('chips-fiches', fcActiveCats, (cat, chipEl) => {
+  if (fcActiveCats.has(cat)) { fcActiveCats.delete(cat); chipEl.classList.remove('on'); }
+  else { fcActiveCats.add(cat); chipEl.classList.add('on'); }
+  if (fcActiveCats.size === 0) { fcActiveCats = new Set(ALL_CATS); renderChips('chips-fiches', fcActiveCats, arguments.callee); }
+  fcApplyFilter();
+});
+
+const fcCard = document.getElementById('fc-card');
+function renderFlashcard() {
+  fcCard.classList.remove('flipped');
+  const item = fcDeck[fcIndex];
+  document.getElementById('fc-front-cat').textContent = CATEGORY_LABELS[item.cat];
+  document.getElementById('fc-front-text').textContent = item.q;
+  document.getElementById('fc-back-text').textContent = item.a;
+  document.getElementById('fc-count').textContent = (fcIndex + 1) + ' / ' + fcDeck.length;
+  document.getElementById('fc-progress').style.width = (((fcIndex+1)/fcDeck.length)*100) + '%';
+  document.getElementById('fc-prev').disabled = fcIndex === 0;
+}
+document.getElementById('fc-card').addEventListener('click', () => fcCard.classList.toggle('flipped'));
+document.getElementById('fc-flip').addEventListener('click', () => fcCard.classList.toggle('flipped'));
+document.getElementById('fc-next').addEventListener('click', () => {
+  fcIndex = (fcIndex + 1) % fcDeck.length;
+  renderFlashcard();
+});
+document.getElementById('fc-prev').addEventListener('click', () => {
+  if (fcIndex > 0) { fcIndex--; renderFlashcard(); }
+});
+document.getElementById('fc-shuffle-btn').addEventListener('click', () => {
+  fcDeck = shuffleArr(fcDeck);
+  fcIndex = 0;
+  renderFlashcard();
+});
+renderFlashcard();
+
+// ============ QUIZ ============
+let quizActiveCats = new Set(ALL_CATS);
+let quizQuestions = [];
+let quizIndex = 0;
+let quizScore = 0;
+let quizCatStats = {};
+let answered = false;
+
+renderChips('chips-quiz', quizActiveCats, (cat, chipEl) => {
+  if (quizActiveCats.has(cat)) { quizActiveCats.delete(cat); chipEl.classList.remove('on'); }
+  else { quizActiveCats.add(cat); chipEl.classList.add('on'); }
+  if (quizActiveCats.size === 0) { quizActiveCats = new Set(ALL_CATS); renderChips('chips-quiz', quizActiveCats, arguments.callee); }
+});
+
+document.getElementById('quiz-start-btn').addEventListener('click', startQuiz);
+document.getElementById('quiz-retry-btn').addEventListener('click', () => {
+  document.getElementById('quiz-result').style.display = 'none';
+  startQuiz();
+});
+document.getElementById('quiz-home-btn').addEventListener('click', () => {
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-intro').style.display = 'block';
+});
+
+function startQuiz() {
+  const pool = MCQ.filter(q => quizActiveCats.has(q.cat));
+  quizQuestions = shuffleArr(pool.length ? pool : MCQ);
+  quizIndex = 0;
+  quizScore = 0;
+  quizCatStats = {};
+  document.getElementById('quiz-intro').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-play').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  const item = quizQuestions[quizIndex];
+  document.getElementById('q-cat').textContent = CATEGORY_LABELS[item.cat];
+  document.getElementById('q-index').textContent = 'Question ' + (quizIndex+1) + ' / ' + quizQuestions.length;
+  document.getElementById('q-text').textContent = item.q;
+  document.getElementById('quiz-progress').style.width = ((quizIndex/quizQuestions.length)*100) + '%';
+  document.getElementById('q-score-live').textContent = 'Score : ' + quizScore + ' / ' + quizIndex;
+  document.getElementById('q-next-btn').disabled = true;
+  const explainEl = document.getElementById('q-explain');
+  explainEl.classList.remove('show');
+  explainEl.innerHTML = '';
+
+  const optsEl = document.getElementById('q-options');
+  optsEl.innerHTML = '';
+  item.options.forEach((opt, idx) => {
+    const b = document.createElement('button');
+    b.className = 'q-opt';
+    b.textContent = opt;
+    b.addEventListener('click', () => selectOption(idx, item));
+    optsEl.appendChild(b);
+  });
+}
+
+function selectOption(idx, item) {
+  if (answered) return;
+  answered = true;
+  const opts = document.querySelectorAll('.q-opt');
+  opts.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === item.correct) btn.classList.add('correct');
+    else if (i === idx) btn.classList.add('wrong');
+  });
+  if (!quizCatStats[item.cat]) quizCatStats[item.cat] = {correct:0, total:0};
+  quizCatStats[item.cat].total++;
+  if (idx === item.correct) {
+    quizScore++;
+    quizCatStats[item.cat].correct++;
+  }
+  document.getElementById('q-score-live').textContent = 'Score : ' + quizScore + ' / ' + (quizIndex+1);
+  const explainEl = document.getElementById('q-explain');
+  explainEl.innerHTML = '<strong>' + (idx === item.correct ? 'Correct. ' : 'Pas tout à fait. ') + '</strong>' + item.exp;
+  explainEl.classList.add('show');
+  document.getElementById('q-next-btn').disabled = false;
+}
+
+document.getElementById('q-next-btn').addEventListener('click', () => {
+  quizIndex++;
+  if (quizIndex >= quizQuestions.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+});
+
+function showResults() {
+  document.getElementById('quiz-play').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'block';
+  document.getElementById('result-score-text').textContent = quizScore + ' / ' + quizQuestions.length;
+  const pct = Math.round((quizScore/quizQuestions.length)*100);
+  let msg = '';
+  if (pct >= 90) msg = "Excellente maîtrise du sujet.";
+  else if (pct >= 70) msg = "Bonne connaissance, quelques révisions ciblées suffiront.";
+  else if (pct >= 50) msg = "Bases correctes, une relecture des fiches est recommandée.";
+  else msg = "Reprenez les fiches de révision avant de retenter le quiz.";
+  document.getElementById('result-msg').textContent = pct + ' % — ' + msg;
+
+  const bdEl = document.getElementById('result-breakdown');
+  bdEl.innerHTML = '';
+  Object.keys(quizCatStats).forEach(cat => {
+    const s = quizCatStats[cat];
+    const row = document.createElement('div');
+    row.className = 'rb-row';
+    row.innerHTML = '<span class="rb-cat">' + CATEGORY_LABELS[cat] + '</span><span class="rb-score">' + s.correct + ' / ' + s.total + '</span>';
+    bdEl.appendChild(row);
+  });
+}
+</script>
+</body>
+</html>
